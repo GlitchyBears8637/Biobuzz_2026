@@ -2,7 +2,6 @@
 package org.firstinspires.ftc.teamcode.RobotHdw;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import android.graphics.Color;
@@ -79,7 +78,8 @@ public class ColorSensorSubsystem {
     }
 
     // --- Constructor ---
-    public ColorSensorSubsystem(HardwareRobot robot) {
+    /*
+    public ColorSensorSubsystem(RobotHdw robot) {
         // Initialize sensors from the HardwareRobot instance
         sensor1 = robot.sensorColor1;
         sensor2 = robot.sensorColor2;
@@ -98,6 +98,8 @@ public class ColorSensorSubsystem {
             timer.reset();
         }
     }
+
+     */
 
     // --- Queue Management ---
 

@@ -9,7 +9,7 @@ public class IntakeSubsystem {
     private boolean intakeOn = false;
     private boolean aWasPressed = false;
 
-    public IntakeSubsystem(HardwareRobot robot) {
+    public IntakeSubsystem(RobotHdw robot) {
         this.motorIntake = robot.motorIntake;
     }
 

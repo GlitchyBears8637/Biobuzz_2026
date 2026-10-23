@@ -11,7 +11,6 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo; // Continuous Rotation Servo
 import com.qualcomm.hardware.rev.RevColorSensorV3;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 /**
  * This is NOT an OpMode.
@@ -44,10 +43,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  *  "sensorColor1" ControlHub I2C - 1
  *  "sensorColor2" ControlHub I2C - 2
  *  "sensorColor3" ControlHub I2C - 3
- *  "otos" ExpansionHu I2C - 0
+ *  "pinpoint" ControlHub / ExpansionHub I2C
  *  //"limelight" is initialized in limelight class routine
  */
-public class HardwareRobot {
+public class RobotHdw {
 
     /* Public OpMode members. */
     // Motors
@@ -80,7 +79,7 @@ public class HardwareRobot {
     HardwareMap hwMap = null;
 
     /* Constructor */
-    public HardwareRobot() {
+    public RobotHdw() {
         // No special actions needed in the constructor
     }
 
@@ -122,6 +121,7 @@ public class HardwareRobot {
         motorLauncher.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Define and initialize ALL installed servos.
+        /*
         servoTubeWheel = hwMap.get(CRServo.class, "servoTubeWheel");
         servoAim       = hwMap.get(Servo.class, "servoAim");
         servoHood      = hwMap.get(Servo.class, "servoHood");
@@ -140,6 +140,8 @@ public class HardwareRobot {
         sensorColor1.setGain(4);
         sensorColor2.setGain(4);
         sensorColor3.setGain(4);
+
+         */
 
         // Initialize the IMU
         imu = hwMap.get(IMU.class, "imu");

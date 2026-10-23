@@ -2,11 +2,9 @@ package org.firstinspires.ftc.teamcode.RobotHdw;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.RobotHdw.HardwareRobot;
-
 public class TubeWheelSubsystem {
 
-    private final HardwareRobot robot;
+    private final RobotHdw robot;
     private final LauncherSubsystem launcherSubsystem;
     private final ColorSensorSubsystem colorSensorSubsystem;
     private final double LIFT_RESTED_POSITION = 0.89;
@@ -14,7 +12,7 @@ public class TubeWheelSubsystem {
     private boolean queueIsFull = false;
 
 
-    public TubeWheelSubsystem(HardwareRobot robot, LauncherSubsystem launcherSubsystem, ColorSensorSubsystem colorSensorSubsystem) {
+    public TubeWheelSubsystem(RobotHdw robot, LauncherSubsystem launcherSubsystem, ColorSensorSubsystem colorSensorSubsystem) {
         this.robot = robot;
         this.launcherSubsystem = launcherSubsystem;
         this.colorSensorSubsystem = colorSensorSubsystem;

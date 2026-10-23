@@ -1,10 +1,11 @@
 package org.firstinspires.ftc.teamcode.RobotHdw;
 
+import com.pedropathing.math.Pose;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 public class TurretControl {
 
-    private final HardwareRobot robot;
+    private final RobotHdw robot;
     private final LimelightSubsystem limelight;
 
     // Constants for target positions (adjust as needed)
@@ -21,7 +22,7 @@ public class TurretControl {
     // We've set this to represent a 180-degree total sweep (+/- 90 degrees).
     private static final double MAX_TURRET_ANGLE_RAD = Math.PI / 2.0;
 
-    public TurretControl(HardwareRobot robot, LimelightSubsystem limelightSubsystem) {
+    public TurretControl(RobotHdw robot, LimelightSubsystem limelightSubsystem) {
         this.robot = robot;
         this.limelight = limelightSubsystem; // Save it for later
     }
@@ -44,14 +45,14 @@ public class TurretControl {
             targetY = BLUE_TARGET_Y;
         }
 
-        double dx = targetX - robotPose.getX();
-        double dy = targetY - robotPose.getY();
+        double dx = targetX - robotPose.x();
+        double dy = targetY - robotPose.y();
 
         // Calculate the angle to the target relative to the field's coordinate system
         double angleToTarget = Math.atan2(dy, dx);
 
         // Get the robot's current heading from the Pose
-        double robotHeading = robotPose.getHeading();
+        double robotHeading = robotPose.heading();
 
         // Calculate the angle the turret needs to be relative to the robot
         double turretAngle = angleToTarget - robotHeading;

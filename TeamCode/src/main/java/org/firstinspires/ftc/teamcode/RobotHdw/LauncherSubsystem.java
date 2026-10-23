@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.RobotHdw;
 
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -73,7 +73,7 @@ public class LauncherSubsystem {
         if (autoshootaim) {
             telemetry.addData("Auto Turret", "Enabled");
 
-            Pose robotPose = follower.getPose();
+            Pose robotPose = follower.closestPose();
             // <<< FIXED: Removed the second argument to match the new method in TurretControl >>>
             double baseAimPosition = turretControl.calculateTurretAngle(robotPose);
 
@@ -168,11 +168,11 @@ public class LauncherSubsystem {
     }
 
     public void aimAndPowerFromPose() {
-        Pose robotPose = follower.getPose();
+        Pose robotPose = follower.closestPose();
         double targetX = limelight.getAlliance() == LimelightSubsystem.Alliance.RED ? 127 : 16;
         double targetY = 131;
-        double dx = targetX - robotPose.getX();
-        double dy = targetY - robotPose.getY();
+        double dx = targetX - robotPose.x();
+        double dy = targetY - robotPose.y();
         double distance = Math.sqrt(dx*dx + dy*dy);
 
         // This is a guess, you may need to tune these values
