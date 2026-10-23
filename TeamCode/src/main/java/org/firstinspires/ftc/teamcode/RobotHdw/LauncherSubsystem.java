@@ -1,125 +1,110 @@
 package org.firstinspires.ftc.teamcode.RobotHdw;
 
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+/**
+ * LauncherSubsystem
+ * 
+ * EDUCATIONAL OVERVIEW FOR ROOKIE PROGRAMMERS:
+ * This subsystem manages the game piece shooter mechanism. 
+ * 
+ * Key concepts:
+ * 1. Closed-Loop Velocity Control (PIDF): Using encoder feedback on `DcMotorEx` to maintain 
+ *    consistent flywheel RPM under the load of launching game pieces.
+ * 2. Vision Distance Scaling: Using the Limelight target area (ta) to dynamically scale 
+ *    launcher RPM based on how far away the robot is from the bucket.
+ * 3. Tolerance Checking: Ensuring the flywheel has reached target speed before allowing a shot.
+ */
 public class LauncherSubsystem {
 
     private final DcMotorEx motorLauncher;
-    private final Servo servoHood;
-    private final Servo servoAim;
     private final LimelightSubsystem limelight;
-    private final TurretControl turretControl;
+    private final RobotAimSubsystem robotAimSubsystem;
     private final Follower follower;
 
-    // --- TUNING CONSTANTS ---
-    private static final double MIN_TARGET_AREA = 0.23;
-    private static final double MAX_TARGET_AREA = 2.5;
+    // --- Tuning Constants ---
+    private static final double MIN_TARGET_AREA = 0.23; // Minimum visible target size
+    private static final double MAX_TARGET_AREA = 2.5;  // Maximum visible target size
     private static final double MIN_RPM = 2750;
     private static final double MAX_RPM = 3500;
     private static final double TELEOP_MAX_RPM = 3400;
-    private static final double RPM_TOLERANCE = 100; // The range at which the motor has to be close enough in speed to launch!
-    private static final double TICKS_PER_REVOLUTION = 28;
+    private static final double RPM_TOLERANCE = 100;    // RPM speed window required before launching
+    private static final double TICKS_PER_REVOLUTION = 28; // Encoder resolution for GoBilda / REV motors
+
+    // PIDF Coefficients for maintaining constant flywheel speed under load
     public static double MOTOR_VELO_PID_P = 25;
     public static double MOTOR_VELO_PID_I = 0;
     public static double MOTOR_VELO_PID_D = 10;
     public static double MOTOR_VELO_PID_F = 13;
-    private static final double MIN_HOOD_ANGLE = 0.30; // Hood farthest up, aiming more straight forward
-    private static final double MAX_HOOD_ANGLE = 0.57; // Hood farthest down, aiming more up
-    private static final double SERVO_AIM_MIN = 0.48; // Servo limits are just under our hard limits, hard limit is 0.47
-    private static final double SERVO_AIM_MAX = 0.66; // Servo limits are just under our hard limits, hard limit is 0.67
 
     private double targetRPM = 0;
-    private double aimPosition = 0.5;
-    private double hoodPosition = 0.56;
     private boolean autoshootaim = false;
     private boolean leftBumperWasPressed = false;
     private boolean isTeleOp = false;
+
     public void setTeleOpMode(boolean teleOp) {
         this.isTeleOp = teleOp;
     }
 
-
-    public LauncherSubsystem(HardwareMap hardwareMap, LimelightSubsystem limelight, TurretControl turretControl, Follower follower) {
+    public LauncherSubsystem(HardwareMap hardwareMap, LimelightSubsystem limelight, RobotAimSubsystem robotAimSubsystem, Follower follower) {
         this.limelight = limelight;
-        this.turretControl = turretControl;
+        this.robotAimSubsystem = robotAimSubsystem;
         this.follower = follower;
 
+        // Initialize shooter motor as a DcMotorEx to utilize advanced velocity PIDF control
         motorLauncher = hardwareMap.get(DcMotorEx.class, "motorLauncher");
         motorLauncher.setDirection(DcMotor.Direction.REVERSE);
         motorLauncher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorLauncher.setVelocityPIDFCoefficients(MOTOR_VELO_PID_P, MOTOR_VELO_PID_I, MOTOR_VELO_PID_D, MOTOR_VELO_PID_F);
-
-        servoHood = hardwareMap.get(Servo.class, "servoHood");
-        servoAim = hardwareMap.get(Servo.class, "servoAim");
     }
 
+    /**
+     * Called every loop cycle to handle auto-aim toggle, trigger controls, and sensor fusion.
+     */
     public void update(Gamepad gamepad, Telemetry telemetry) {
+        // Toggle auto-shoot and auto-aim mode using Left Bumper (with edge-detection debounce)
         if (gamepad.left_bumper && !leftBumperWasPressed) {
             autoshootaim = !autoshootaim;
         }
         leftBumperWasPressed = gamepad.left_bumper;
 
-        double newAimPosition = this.aimPosition;
-
         if (autoshootaim) {
-            telemetry.addData("Auto Turret", "Enabled");
+            telemetry.addData("Auto Aim & Shoot", "Enabled");
 
-            Pose robotPose = follower.getPose();
-            // <<< FIXED: Removed the second argument to match the new method in TurretControl >>>
-            double baseAimPosition = turretControl.calculateTurretAngle(robotPose);
+            // Calculate heading error toward the closest bucket of our alliance color
+            Pose robotPose = follower.closestPose();
+            double headingError = robotAimSubsystem.calculateRobotAimHeadingError(robotPose);
+            RobotAimSubsystem.Bucket closest = robotAimSubsystem.getClosestBucket();
 
+            if (closest != null) {
+                telemetry.addData("Target Bucket", closest.name + " (" + closest.alliance + ")");
+            }
+            telemetry.addData("Heading Error", String.format("%.2f deg", Math.toDegrees(headingError)));
+
+            // Reaffirm robot position using Limelight AprilTags (Sensor Fusion)
+            limelight.reaffirmPosition(follower);
+
+            // If Limelight sees a valid target, scale shooter RPM based on distance (target area)
             if (limelight.hasValidTarget()) {
-                // Clamp the base position to see if we are at a physical limit.
-                double clampedBaseAim = Math.max(SERVO_AIM_MIN, Math.min(SERVO_AIM_MAX, baseAimPosition));
-                double pidCorrection = 0.0;
-
-                // Only apply PID correction if the base aim is NOT at a limit.
-                // This prevents the PID from fighting the physical stops.
-                if (clampedBaseAim > SERVO_AIM_MIN && clampedBaseAim < SERVO_AIM_MAX) {
-                    pidCorrection = limelight.getAimCorrection();
-                }
-
-                newAimPosition = clampedBaseAim + pidCorrection;
-
                 aimAndPowerForDistance(limelight.getTargetArea());
             } else {
-                newAimPosition = baseAimPosition;
                 limelight.resetAimPID();
-                setRPM(0);
+                setRPM(0); // Stop shooter if target is lost
             }
         } else {
             limelight.resetAimPID();
-            telemetry.addData("Auto Turret", "Disabled");
+            telemetry.addData("Auto Aim & Shoot", "Disabled");
 
-            // Use player 2's left joystick to manually aim the turret
-            double manualAimInput = gamepad.left_stick_x;
-            if (Math.abs(manualAimInput) > 0.1) { // Apply a deadzone
-                // This increment value scales the joystick input for finer control.
-                // You can adjust this value for faster or slower manual aiming.
-                newAimPosition += manualAimInput * 0.005;
-            }
-
-            // Use player 2's right joystick to manually control the hood
-            double manualHoodInput = gamepad.right_stick_y;
-            if (Math.abs(manualHoodInput) > 0.1) { // Apply a deadzone
-                // Pushing up on the stick (negative value) decreases position, moving hood up.
-                // Pushing down on the stick (positive value) increases position, moving hood down.
-                hoodPosition += manualHoodInput * 0.005;
-            }
-            hoodPosition = Math.max(MIN_HOOD_ANGLE, Math.min(MAX_HOOD_ANGLE, hoodPosition));
-            setHoodPosition(hoodPosition);
-
+            // Manual trigger control for shooter RPM
             if (gamepad.right_trigger > 0.1) {
-                // Scale the trigger value from 0.1-1.0 to a 0.0-1.0 range
                 double normalizedTrigger = (gamepad.right_trigger - 0.1) / 0.9;
                 double manualRPM = MIN_RPM + normalizedTrigger * (MAX_RPM - MIN_RPM);
                 setRPM(manualRPM);
@@ -127,8 +112,6 @@ public class LauncherSubsystem {
                 setRPM(0);
             }
         }
-        // Use the centralized, safe method to set the turret's position
-        setAimPosition(newAimPosition);
     }
 
     public void setAutoShootAim(boolean autoAim) {
@@ -136,16 +119,8 @@ public class LauncherSubsystem {
     }
 
     /**
-     * Sets the turret's aim position while enforcing physical hardware limits.
-     * @param position The desired, unclamped servo position.
+     * Dynamically scales launcher RPM based on camera target size (distance proxy).
      */
-    public void setAimPosition(double position) {
-        // Clamp the value to the servo's physical limits
-        double clampedPosition = Math.max(SERVO_AIM_MIN, Math.min(SERVO_AIM_MAX, position));
-        servoAim.setPosition(clampedPosition);
-        this.aimPosition = clampedPosition; // Also update the internal state
-    }
-
     public void aimAndPowerForDistance(double targetArea) {
         double currentMax = isTeleOp ? TELEOP_MAX_RPM : MAX_RPM;
         if (targetArea < MIN_TARGET_AREA || targetArea > MAX_TARGET_AREA) {
@@ -153,29 +128,23 @@ public class LauncherSubsystem {
             return;
         }
 
+        // Linear interpolation between target area and RPM
         double range = MAX_TARGET_AREA - MIN_TARGET_AREA;
         double fraction = (targetArea - MIN_TARGET_AREA) / range;
-
         double rpm = currentMax + fraction * (MIN_RPM - currentMax);
-        double hoodAngle = MIN_HOOD_ANGLE + fraction * (MAX_HOOD_ANGLE - MIN_HOOD_ANGLE);
-
         double clampedRpm = Math.max(MIN_RPM, Math.min(rpm, currentMax));
-        double clampedHoodAngle = Math.max(MIN_HOOD_ANGLE, Math.min(hoodAngle, MAX_HOOD_ANGLE));
 
         setRPM(clampedRpm);
-        setHoodPosition(clampedHoodAngle);
-        this.hoodPosition = clampedHoodAngle;
     }
 
     public void aimAndPowerFromPose() {
-        Pose robotPose = follower.getPose();
+        Pose robotPose = follower.closestPose();
         double targetX = limelight.getAlliance() == LimelightSubsystem.Alliance.RED ? 127 : 16;
         double targetY = 131;
-        double dx = targetX - robotPose.getX();
-        double dy = targetY - robotPose.getY();
-        double distance = Math.sqrt(dx*dx + dy*dy);
+        double dx = targetX - robotPose.x();
+        double dy = targetY - robotPose.y();
+        double distance = Math.sqrt(dx * dx + dy * dy);
 
-        // This is a guess, you may need to tune these values
         final double MIN_DISTANCE = 50.0;
         final double MAX_DISTANCE = 150.0;
 
@@ -188,26 +157,18 @@ public class LauncherSubsystem {
         double fraction = (distance - MIN_DISTANCE) / range;
 
         double rpm = MIN_RPM + fraction * (currentMax - MIN_RPM);
-        double hoodAngle = MIN_HOOD_ANGLE + fraction * (MAX_HOOD_ANGLE - MIN_HOOD_ANGLE);
-
-
         double clampedRpm = Math.max(MIN_RPM, Math.min(rpm, currentMax));
-        double clampedHoodAngle = Math.max(MIN_HOOD_ANGLE, Math.min(hoodAngle, MAX_HOOD_ANGLE));
 
         setRPM(clampedRpm);
-        setHoodPosition(clampedHoodAngle);
-        this.hoodPosition = clampedHoodAngle;
     }
 
+    /**
+     * Sets the target RPM using ticks per second converted from rotations per minute.
+     */
     public void setRPM(double rpm) {
         this.targetRPM = rpm;
         double ticksPerSecond = (rpm * TICKS_PER_REVOLUTION) / 60.0;
         motorLauncher.setVelocity(ticksPerSecond);
-    }
-
-    public void setHoodPosition(double position) {
-        servoHood.setPosition(position);
-        this.hoodPosition = position;
     }
 
     public double getRPM() {
@@ -218,14 +179,9 @@ public class LauncherSubsystem {
         return targetRPM;
     }
 
-    public double getHoodPosition() {
-        return hoodPosition;
-    }
-
-    public double getAimPosition() {
-        return aimPosition;
-    }
-
+    /**
+     * Returns true when the flywheel has reached target speed within tolerance (safe to shoot).
+     */
     public boolean isRpmWithinTolerance() {
         return Math.abs(getRPM() - targetRPM) < RPM_TOLERANCE && targetRPM != 0;
     }

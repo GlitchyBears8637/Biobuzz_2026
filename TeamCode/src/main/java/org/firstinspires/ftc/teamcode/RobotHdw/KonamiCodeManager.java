@@ -7,6 +7,14 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.util.ArrayList;
 
+/**
+ * KonamiCodeManager (Fun Easter Egg Subsystem)
+ * 
+ * EDUCATIONAL OVERVIEW FOR ROOKIE PROGRAMMERS:
+ * This class demonstrates edge detection and state machine tracking on gamepads.
+ * If the drivers enter the classic video game cheat code (Up, Up, Down, Down, Left, Right, Left, Right, B, A)
+ * on the gamepad, it triggers a secret sound effect and telemetry message!
+ */
 public class KonamiCodeManager {
 
     private final ArrayList<String> inputHistory = new ArrayList<>();
@@ -21,6 +29,9 @@ public class KonamiCodeManager {
         this.telemetry = telemetry;
     }
 
+    /**
+     * Checks button presses every loop cycle against the secret button sequence.
+     */
     public void update(Gamepad gamepad) {
         long currentTime = System.currentTimeMillis();
 
@@ -30,10 +41,12 @@ public class KonamiCodeManager {
             inputHistory.add(pressedButton);
             lastInputTime = currentTime;
 
+            // Keep history trimmed to the last 10 inputs
             if (inputHistory.size() > 10) {
                 inputHistory.remove(0);
             }
 
+            // Check if the sequence matches the 10-step Konami code
             if (inputHistory.size() == 10) {
                 String recentInputs = String.join("", inputHistory);
                 if (recentInputs.equals("upupdowndownleftrightleftrightba") && !konamiCodeActivated) {
@@ -42,13 +55,18 @@ public class KonamiCodeManager {
             }
         }
 
+        // Reset sequence if player takes too long (3 seconds) or presses X/Y reset buttons
         if (shouldReset(gamepad, currentTime) && !inputHistory.isEmpty()) {
             resetKonami();
         }
 
+        // Save current gamepad state for edge detection next loop
         previousGamepadState.copy(gamepad);
     }
 
+    /**
+     * Edge detection: returns string only on the exact frame a button is pressed down.
+     */
     private String getPressedButton(Gamepad gamepad) {
         if (!previousGamepadState.dpad_up && gamepad.dpad_up) return "up";
         if (!previousGamepadState.dpad_down && gamepad.dpad_down) return "down";

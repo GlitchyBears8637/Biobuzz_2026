@@ -1,4 +1,3 @@
-// HardwareRobot.java
 package org.firstinspires.ftc.teamcode.RobotHdw;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -9,48 +8,21 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.CRServo; // Continuous Rotation Servo
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 /**
- * This is NOT an OpMode.
- *
- * This class can be used to define all the specific hardware for a single robot.
- * In this case that robot is the GoBilda Drive Base.
- *
- * This hardware class assumes the following device names have been configured on the robot:
- *
- * Motors:
- *  "motorFrontLeft" ControlHub - 0
- *  "motorBackLeft" ControlHub - 1
- *  "motorFrontRight" ControlHub - 2
- *  "motorBackRight" ControlHub - 3
- *  "motorIntake" ExpansionHub - 0
- *  "motorLauncher" ExpansionHub - 1
- *
- * Servos:
- *  "servoLift" ExpansionHub - 0
- *  "servoTubeWheel" (CRServo) ExpansionHub - 1
- *  "servoAim" ControlHub - 0
- *  "servoHood" ControlHub - 1
- *  "lamp1" ControlHub - 2
- *  "lamp2" ControlHub - 3
- *  "lamp3" ControlHub - 4
- *  "lamp4" ControlHub -5
- *
- * Sensors:
- * "imu" ControlHub I2C - 0
- *  "sensorColor1" ControlHub I2C - 1
- *  "sensorColor2" ControlHub I2C - 2
- *  "sensorColor3" ControlHub I2C - 3
- *  "otos" ExpansionHu I2C - 0
- *  //"limelight" is initialized in limelight class routine
+ * RobotHdw (Hardware Map Subsystem)
+ * 
+ * EDUCATIONAL OVERVIEW FOR ROOKIE PROGRAMMERS:
+ * This class serves as the central hardware mapping definition for the robot. 
+ * Instead of writing hardware declarations inside every OpMode, all motors, servos, 
+ * and sensors are declared and initialized here in one clean, reusable place.
  */
-public class HardwareRobot {
+public class RobotHdw {
 
-    /* Public OpMode members. */
-    // Motors
+    // --- Public Hardware Members ---
+    // Drivetrain & Mechanism Motors
     public DcMotorEx motorFrontLeft   = null;
     public DcMotorEx motorBackLeft    = null;
     public DcMotorEx motorFrontRight  = null;
@@ -60,8 +32,6 @@ public class HardwareRobot {
 
     // Servos
     public CRServo servoTubeWheel   = null;
-    public Servo   servoAim         = null;
-    public Servo   servoHood        = null;
     public Servo   servoLift        = null;
     public Servo   lamp1            = null;
     public Servo   lamp2            = null;
@@ -72,24 +42,22 @@ public class HardwareRobot {
     public RevColorSensorV3 sensorColor1;
     public RevColorSensorV3 sensorColor2;
     public RevColorSensorV3 sensorColor3;
+    public RevColorSensorV3 sensorColor4;
     public IMU imu = null;
 
-
-
-    /* local OpMode members. */
     HardwareMap hwMap = null;
 
-    /* Constructor */
-    public HardwareRobot() {
-        // No special actions needed in the constructor
+    public RobotHdw() {
+        // Constructor left empty intentionally
     }
 
-    /* Initialize standard Hardware interfaces */
+    /**
+     * Initializes all hardware devices by fetching their names from the Driver Station configuration.
+     */
     public void init(HardwareMap ahwMap) {
-        // Save reference to Hardware map
         hwMap = ahwMap;
 
-        // Define and Initialize Motors
+        // Map drivetrain and mechanism motors
         motorFrontLeft  = hwMap.get(DcMotorEx.class, "motorFrontLeft");
         motorBackLeft   = hwMap.get(DcMotorEx.class, "motorBackLeft");
         motorFrontRight = hwMap.get(DcMotorEx.class, "motorFrontRight");
@@ -97,7 +65,7 @@ public class HardwareRobot {
         motorIntake     = hwMap.get(DcMotor.class, "motorIntake");
         motorLauncher   = hwMap.get(DcMotor.class, "motorLauncher");
 
-        // Set motor directions
+        // Set motor directions so positive power drives the robot forward
         motorFrontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         motorBackLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -105,7 +73,7 @@ public class HardwareRobot {
         motorLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
         motorIntake.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        // Set all motors to zero power
+        // Stop all motors upon initialization
         motorFrontLeft.setPower(0);
         motorBackLeft.setPower(0);
         motorFrontRight.setPower(0);
@@ -113,44 +81,20 @@ public class HardwareRobot {
         motorIntake.setPower(0);
         motorLauncher.setPower(0);
 
-        // Set motors to run without encoders by default
+        // Run drivetrain motors without encoders by default (Pedro Pathing manages its own tracking)
         motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        motorLauncher.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        motorLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // Define and initialize ALL installed servos.
-        servoTubeWheel = hwMap.get(CRServo.class, "servoTubeWheel");
-        servoAim       = hwMap.get(Servo.class, "servoAim");
-        servoHood      = hwMap.get(Servo.class, "servoHood");
-        servoLift      = hwMap.get(Servo.class, "servoLift");
-        lamp1          = hwMap.get(Servo.class, "lamp1");
-        lamp2          = hwMap.get(Servo.class, "lamp2");
-        lamp3          = hwMap.get(Servo.class, "lamp3");
-        lamp4          = hwMap.get(Servo.class, "lamp4");
-
-        // Define and initialize ALL installed sensors.
-        sensorColor1 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense1");
-        sensorColor2 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense2");
-        sensorColor3 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense3");
-
-
-        sensorColor1.setGain(4);
-        sensorColor2.setGain(4);
-        sensorColor3.setGain(4);
-
-        // Initialize the IMU
+        // Initialize IMU (Inertial Measurement Unit / Gyro)
         imu = hwMap.get(IMU.class, "imu");
-        // Adjust the orientation parameters to match your robot
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.LEFT));
-        // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
         imu.resetYaw();
-
-        // limelight = hwMap.get(Limelight.class, "limelight");
     }
 }

@@ -6,10 +6,23 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Pose;
 import org.firstinspires.ftc.teamcode.RobotHdw.PIDController;
 
 import java.util.List;
 
+/**
+ * LimelightSubsystem
+ * 
+ * EDUCATIONAL OVERVIEW FOR ROOKIE PROGRAMMERS:
+ * This class interfaces with the Limelight 3A vision camera. It performs three major tasks:
+ * 1. Alliance Tag Filtering: Ignoring AprilTags belonging to the opposing alliance.
+ * 2. Vision Target Tracking: Measuring horizontal offset (tx) and area (ta) to aim and adjust launcher speed.
+ * 3. Sensor Fusion (Position Reaffirmation): Blending wheel odometry with camera vision (Botpose) 
+ *    to eliminate drifting over time.
+ */
 public class LimelightSubsystem {
 
     private Limelight3A limelight;
@@ -22,7 +35,7 @@ public class LimelightSubsystem {
         DETECT
     }
 
-    // Class variables to store the latest data
+    // Class variables to store the latest camera data each loop cycle
     private LLResult latestResult;
     private boolean hasValidTarget = false;
     private double targetX = 0.0;
@@ -30,46 +43,49 @@ public class LimelightSubsystem {
     private double targetArea = 0.0;
     private int targetId = -1;
     private int pipelineIndex = 0;
+    private Pose3D botpose = null;
+    private boolean hasValidBotpose = false;
 
-
-    // Constructor: This is called when you create an instance of the class
+    /**
+     * Constructor: Initializes the Limelight camera hardware and configures the aiming PID controller.
+     */
     public LimelightSubsystem(HardwareMap hardwareMap) {
-        // Initialize the hardware
+        // Retrieve the Limelight camera from the robot configuration
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         // --- PID Controller Initialization ---
-        // These are STARTING values. You WILL need to tune them.
-        // kP: Start with a small value (e.g., 0.01) and increase until it oscillates. Then back off.
-        // If it is oscillating to begin with, decrease the value by 0.01.
-        // kI: Start at 0. Add a tiny value (e.g., 0.001) if it never quite reaches the target.
-        // kD: Start at 0. Add a small value (e.g., 0.005) to dampen oscillations and reduce overshoot.
-        aimPidController = new PIDController(0.0004, 0.003, 0); // Starting Point was P=0.0004, I=0.003, D=0
-        aimPidController.setTarget(0); // We want the tx value to be 0 (centered)
+        // PID (Proportional, Integral, Derivative) helps smooth out movements.
+        // kP handles proportional correction, kI eliminates steady-state error, kD dampens overshoot.
+        aimPidController = new PIDController(0.0004, 0.003, 0); 
+        aimPidController.setTarget(0); // We want the target horizontal offset (tx) to be 0 (centered)
     }
 
+    /**
+     * Switches the camera pipeline (e.g., Tag detection vs. color blob detection).
+     */
     public void setPipeline(int pipelineIndex) {
-        // Ensure the pipeline index is within the valid range
         if (pipelineIndex < 0 || pipelineIndex > 9) {
-            return; // Or throw an error
+            return; 
         }
         this.pipelineIndex = pipelineIndex;
-
-        // The Limelight3A class has a built-in method for this.
-        // You don't need LimelightHelpers.
         limelight.pipelineSwitch(pipelineIndex);
     }
-    public int getPipeline () {
+    
+    public int getPipeline() {
         return pipelineIndex;
     }
 
+    /**
+     * Sets the team alliance and automatically switches to the correct camera pipeline.
+     */
     public void setAlliance(Alliance alliance) {
         this.alliance = alliance;
         if (alliance == Alliance.RED) {
-            setPipeline(1); // Red Alliance pipeline
+            setPipeline(1); // Pipeline 1: Red Alliance tags/goals
         } else if (alliance == Alliance.BLUE) {
-            setPipeline(2); // Blue Alliance pipeline
+            setPipeline(2); // Pipeline 2: Blue Alliance tags/goals
         } else {
-            setPipeline(0); // Initial Pattern Scan Pipeline
+            setPipeline(0); // Pipeline 0: General scan
         }
     }
 
@@ -77,33 +93,102 @@ public class LimelightSubsystem {
         return alliance;
     }
 
-
-    // Call this method once per loop to update the data from the Limelight
+    /**
+     * Called once per control loop cycle to grab fresh results from the Limelight camera,
+     * filter out wrong alliance tags, and store target/botpose information.
+     */
     public void update() {
         latestResult = limelight.getLatestResult();
 
-        // Add a check to ensure the detector results list is not empty
-        hasValidTarget = latestResult != null && latestResult.isValid() && !latestResult.getFiducialResults().isEmpty();
+        // Reset tracking flags before checking new frame data
+        hasValidTarget = false;
+        hasValidBotpose = false;
+        targetX = 0.0;
+        targetY = 0.0;
+        targetArea = 0.0;
+        targetId = -1;
+        botpose = null;
 
-        if (hasValidTarget) {
-            targetX = latestResult.getTx();
-            targetY = latestResult.getTy();
-            targetArea = latestResult.getTa();
-            // This line is now safe because of the check above
-            targetId = latestResult.getFiducialResults().get(0).getFiducialId();
-        } else {
-            // If no target is found, reset all values to a known safe state
-            targetX = 0.0;
-            targetY = 0.0;
-            targetArea = 0.0;
-            targetId = -1; // Use -1 to indicate no valid ID
+        // Ensure the camera has a valid result containing AprilTag fiducial results
+        if (latestResult != null && latestResult.isValid() && !latestResult.getFiducialResults().isEmpty()) {
+            
+            // Loop through all detected tags in the camera frame
+            for (LLResultTypes.FiducialResult fr : latestResult.getFiducialResults()) {
+                int id = fr.getFiducialId();
+                
+                // ALLIANCE FILTERING: Ignore tags that do not belong to our alliance color!
+                if (isTagForAlliance(id, alliance)) {
+                    hasValidTarget = true;
+                    targetX = latestResult.getTx(); // Horizontal offset from crosshair
+                    targetY = latestResult.getTy(); // Vertical offset from crosshair
+                    targetArea = latestResult.getTa(); // Target area (size / distance proxy)
+                    targetId = id;
+                    
+                    // Grab camera estimated field position (Botpose)
+                    botpose = latestResult.getBotpose();
+                    hasValidBotpose = (botpose != null);
+                    break; // Stop searching once we find a valid tag for our alliance
+                }
+            }
         }
     }
 
-    // --- Public "Getter" Methods to Access Data ---
+    /**
+     * Educational Note on Alliance Filtering:
+     * In FTC games, AprilTags have unique ID numbers across the field. 
+     * This method ensures your robot only interacts with tags belonging to your alliance.
+     */
+    public boolean isTagForAlliance(int tagId, Alliance targetAlliance) {
+        if (targetAlliance == Alliance.RED) {
+            // Example: Red alliance tags are IDs 1 through 3 (adjust based on Game Manual)
+            return tagId >= 1 && tagId <= 3;
+        } else if (targetAlliance == Alliance.BLUE) {
+            // Example: Blue alliance tags are IDs 4 through 6 (adjust based on Game Manual)
+            return tagId >= 4 && tagId <= 6;
+        }
+        return true; // Default accept if alliance is unassigned
+    }
+
+    // --- Public Getter Methods ---
 
     public boolean hasValidTarget() {
         return hasValidTarget;
+    }
+
+    public Pose3D getBotpose() {
+        return botpose;
+    }
+
+    public boolean hasValidBotpose() {
+        return hasValidBotpose;
+    }
+
+    /**
+     * SENSOR FUSION / POSITION REAFFIRMATION:
+     * Odometry wheels can slip and drift over time. The Limelight camera sees AprilTags 
+     * in the real world and knows our exact global field position. 
+     * 
+     * This method blends wheel odometry (95%) with camera vision (5%) to constantly 
+     * correct drift smoothly without causing sudden jump glitches on the screen.
+     * 
+     * @param follower The Pedro Pathing Follower instance managing robot position.
+     */
+    public void reaffirmPosition(Follower follower) {
+        if (hasValidBotpose && botpose != null && follower != null) {
+            // Limelight botpose positions are measured in METERS.
+            // Pedro Pathing uses INCHES. We convert meters to inches (1 meter = 39.3701 inches).
+            double limeXInches = botpose.getPosition().x * 39.3701;
+            double limeYInches = botpose.getPosition().y * 39.3701;
+
+            Pose currentOdometryPose = follower.closestPose();
+
+            // Blend odometry with camera vision
+            double fusedX = currentOdometryPose.x() * 0.95 + limeXInches * 0.05;
+            double fusedY = currentOdometryPose.y() * 0.95 + limeYInches * 0.05;
+
+            // Update follower position while keeping smooth heading
+            follower.setPose(new Pose(fusedX, fusedY, currentOdometryPose.heading()));
+        }
     }
 
     public double getTargetX() {
@@ -124,54 +209,28 @@ public class LimelightSubsystem {
 
     // --- Control Methods ---
 
-    /**
-     * Calculates the PID correction value needed to center the robot on the target.
-     * @return The calculated power/servo adjustment.
-     */
     public double getAimCorrection() {
-        // The PID controller calculates how much we need to correct based on the horizontal error (tx)
         return -aimPidController.update(getTargetX());
     }
 
-    /**
-     * Resets the PID controller's internal state. Call this when switching out of auto-aim.
-     */
     public void resetAimPID() {
         aimPidController.reset();
     }
 
-    /**
-     * Starts the Limelight polling for data.
-     */
     public void start() {
         limelight.start();
     }
 
-
-
-    /**
-     * Switches the Limelight pipeline.
-     * @param pipeline The pipeline number (0-9).
-     */
     public void switchPipeline(int pipeline) {
         limelight.pipelineSwitch(pipeline);
     }
 
-    // --- Telemetry Method ---
-
-    /**
-     * Adds Limelight-specific data to the telemetry object for debugging.
-     * @param telemetry The OpMode's telemetry object.
-     */
     public void addTelemetry(Telemetry telemetry) {
         if (hasValidTarget()) {
-            telemetry.addData("Limelight", "Target Found!");
-            telemetry.addData("Target ID", getTargetId());
-            telemetry.addData("Target X", getTargetX());
-            telemetry.addData("Target Y", getTargetY());
-            telemetry.addData("Target Area", getTargetArea());
+            telemetry.addData("Limelight", "Alliance Tag Found (ID: " + getTargetId() + ")");
+            telemetry.addData("Target X, Y", "%.2f, %.2f", getTargetX(), getTargetY());
         } else {
-            telemetry.addData("Limelight", "No Targets");
+            telemetry.addData("Limelight", "Searching for Alliance Tags...");
         }
     }
 }
