@@ -12,12 +12,38 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 
 /**
- * RobotHdw (Hardware Map Subsystem)
- * 
- * EDUCATIONAL OVERVIEW FOR ROOKIE PROGRAMMERS:
- * This class serves as the central hardware mapping definition for the robot. 
- * Instead of writing hardware declarations inside every OpMode, all motors, servos, 
- * and sensors are declared and initialized here in one clean, reusable place.
+ * This is NOT an OpMode.
+ *
+ * This class can be used to define all the specific hardware for a single robot.
+ * In this case that robot is the GoBilda Drive Base.
+ *
+ * This hardware class assumes the following device names have been configured on the robot:
+ *
+ * Motors:
+ *  "motorFrontLeft" ControlHub - 0
+ *  "motorBackLeft" ControlHub - 1
+ *  "motorFrontRight" ControlHub - 2
+ *  "motorBackRight" ControlHub - 3
+ *  "motorIntake" ExpansionHub - 0
+ *  "motorLauncher" ExpansionHub - 1
+ *
+ * Servos:
+ *  "servoLift" ExpansionHub - 0
+ *  "servoTubeWheel" (CRServo) ExpansionHub - 1
+ *  "servoAim" ControlHub - 0
+ *  "servoHood" ControlHub - 1
+ *  "lamp1" ControlHub - 2
+ *  "lamp2" ControlHub - 3
+ *  "lamp3" ControlHub - 4
+ *  "lamp4" ControlHub -5
+ *
+ * Sensors:
+ * "imu" ControlHub I2C - 0
+ *  "sensorColor1" ControlHub I2C - 1
+ *  "sensorColor2" ControlHub I2C - 2
+ *  "sensorColor3" ControlHub I2C - 3
+ *  "otos" ExpansionHu I2C - 0
+ *  //"limelight" is initialized in limelight class routine
  */
 public class RobotHdw {
 
@@ -87,9 +113,29 @@ public class RobotHdw {
         motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        motorLauncher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorLauncher.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Initialize IMU (Inertial Measurement Unit / Gyro)
+        // Define and initialize ALL installed servos.
+        servoTubeWheel = hwMap.get(CRServo.class, "servoTubeWheel");
+        servoAim       = hwMap.get(Servo.class, "servoAim");
+        servoHood      = hwMap.get(Servo.class, "servoHood");
+        servoLift      = hwMap.get(Servo.class, "servoLift");
+        lamp1          = hwMap.get(Servo.class, "lamp1");
+        lamp2          = hwMap.get(Servo.class, "lamp2");
+        lamp3          = hwMap.get(Servo.class, "lamp3");
+        lamp4          = hwMap.get(Servo.class, "lamp4");
+
+        // Define and initialize ALL installed sensors.
+        sensorColor1 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense1");
+        sensorColor2 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense2");
+        sensorColor3 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense3");
+
+
+        sensorColor1.setGain(4);
+        sensorColor2.setGain(4);
+        sensorColor3.setGain(4);
+
+        // Initialize the IMU
         imu = hwMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,

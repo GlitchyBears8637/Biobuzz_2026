@@ -2,17 +2,8 @@ package org.firstinspires/ftc.teamcode.RobotHdw;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-/**
- * TubeWheelSubsystem
- * 
- * EDUCATIONAL OVERVIEW FOR ROOKIE PROGRAMMERS:
- * This subsystem controls the indexing mechanism (tube wheel) that pulls game pieces (balls)
- * into the robot's 4-section storage queue. 
- * 
- * It checks all 4 color sensors simultaneously. When all 4 slots are occupied by balls, 
- * a timer ensures the balls have settled, and then automatically stops the tube wheel motor 
- * to prevent jamming or overloading the intake mechanism.
- */
+import org.firstinspires.ftc.teamcode.RobotHdw.HardwareRobot;
+
 public class TubeWheelSubsystem {
 
     private final RobotHdw robot;

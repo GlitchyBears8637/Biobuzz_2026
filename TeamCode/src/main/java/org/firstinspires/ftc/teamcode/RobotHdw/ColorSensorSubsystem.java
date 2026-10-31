@@ -64,6 +64,43 @@ public class ColorSensorSubsystem {
         }
     }
 
+    // Enum to represent the state of Lamp 4 and its corresponding servo positions
+    private enum Lamp4State {
+        OFF(0),
+        RED(0.277),
+        GREEN(0.5),
+        BLUE(0.611); // For auto-aim without a target
+
+        public final double position;
+
+        Lamp4State(double position) {
+            this.position = position;
+        }
+    }
+
+    // --- Constructor ---
+    public ColorSensorSubsystem(HardwareRobot robot) {
+        // Initialize sensors from the HardwareRobot instance
+        sensor1 = robot.sensorColor1;
+        sensor2 = robot.sensorColor2;
+        sensor3 = robot.sensorColor3;
+
+        // Initialize lamps from the HardwareRobot instance
+        lamp1 = robot.lamp1;
+        lamp2 = robot.lamp2;
+        lamp3 = robot.lamp3;
+        lamp4 = robot.lamp4;
+
+        // Reset timers on initialization
+        flashTimer.reset();
+        lamp4FlashTimer.reset();
+        for (ElapsedTime timer : debounceTimers) {
+            timer.reset();
+        }
+    }
+
+    // --- Queue Management ---
+
     /**
      * Adds a detected ball color to the 4-section ball queue.
      * If the queue reaches 4 items, the oldest (first) item is removed.
