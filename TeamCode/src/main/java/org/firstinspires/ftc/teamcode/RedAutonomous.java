@@ -61,7 +61,7 @@ public class RedAutonomous extends LinearOpMode {
 
         // Set starting robot pose (X, Y in inches, Heading in radians) on the Red starting tile
         // TODO: Adjust these starting coordinates to match your robot's physical placement on the field
-        Pose startPose = new Pose(12.0, 60.0, Math.toRadians(0.0));
+        Pose startPose = new Pose(58.6, 12.0, Math.toRadians(0.0));
         follower.setPose(startPose);
 
         telemetry.addData("Status", "Red Autonomous Initialized. Ready for START.");

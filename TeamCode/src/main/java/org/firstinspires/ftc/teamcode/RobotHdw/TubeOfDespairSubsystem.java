@@ -1,10 +1,8 @@
-package org.firstinspires/ftc.teamcode.RobotHdw;
+package org.firstinspires.ftc.teamcode.RobotHdw;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.RobotHdw.HardwareRobot;
-
-public class TubeWheelSubsystem {
+public class TubeOfDespairSubsystem {
 
     private final RobotHdw robot;
     private final LauncherSubsystem launcherSubsystem;
@@ -14,7 +12,7 @@ public class TubeWheelSubsystem {
     private ElapsedTime queueFullTimer = new ElapsedTime();
     private boolean queueIsFull = false;
 
-    public TubeWheelSubsystem(RobotHdw robot, LauncherSubsystem launcherSubsystem, ColorSensorSubsystem colorSensorSubsystem) {
+    public TubeOfDespairSubsystem(RobotHdw robot, LauncherSubsystem launcherSubsystem, ColorSensorSubsystem colorSensorSubsystem) {
         this.robot = robot;
         this.launcherSubsystem = launcherSubsystem;
         this.colorSensorSubsystem = colorSensorSubsystem;

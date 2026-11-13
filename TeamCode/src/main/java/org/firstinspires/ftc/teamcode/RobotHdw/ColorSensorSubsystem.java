@@ -79,13 +79,14 @@ public class ColorSensorSubsystem {
     }
 
     // --- Constructor ---
-    public ColorSensorSubsystem(HardwareRobot robot) {
-        // Initialize sensors from the HardwareRobot instance
+    public ColorSensorSubsystem(RobotHdw robot) {
+        // Initialize sensors from the RobotHdw instance
         sensor1 = robot.sensorColor1;
         sensor2 = robot.sensorColor2;
         sensor3 = robot.sensorColor3;
+        sensor4 = robot.sensorColor4;
 
-        // Initialize lamps from the HardwareRobot instance
+        // Initialize lamps from the RobotHdw instance
         lamp1 = robot.lamp1;
         lamp2 = robot.lamp2;
         lamp3 = robot.lamp3;
@@ -93,7 +94,6 @@ public class ColorSensorSubsystem {
 
         // Reset timers on initialization
         flashTimer.reset();
-        lamp4FlashTimer.reset();
         for (ElapsedTime timer : debounceTimers) {
             timer.reset();
         }

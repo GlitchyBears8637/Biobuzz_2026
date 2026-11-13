@@ -59,6 +59,8 @@ public class RobotHdw {
     // Servos
     public CRServo servoTubeWheel   = null;
     public Servo   servoLift        = null;
+    public Servo   servoAim         = null;
+    public Servo   servoHood        = null;
     public Servo   lamp1            = null;
     public Servo   lamp2            = null;
     public Servo   lamp3            = null;

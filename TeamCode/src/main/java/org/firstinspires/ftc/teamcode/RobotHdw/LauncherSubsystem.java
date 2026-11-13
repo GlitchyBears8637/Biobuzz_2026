@@ -84,9 +84,10 @@ public class LauncherSubsystem {
             double headingError = robotAimSubsystem.calculateRobotAimHeadingError(robotPose);
             RobotAimSubsystem.Bucket closest = robotAimSubsystem.getClosestBucket();
 
-            Pose robotPose = follower.getPose();
-            // <<< FIXED: Removed the second argument to match the new method in TurretControl >>>
-            double baseAimPosition = turretControl.calculateTurretAngle(robotPose);
+            if (closest != null) {
+                telemetry.addData("Target Bucket", closest.name + " (" + closest.alliance + ")");
+            }
+            telemetry.addData("Heading Error", String.format("%.2f deg", Math.toDegrees(headingError)));
 
             // Reaffirm robot position using Limelight AprilTags (Sensor Fusion)
             limelight.reaffirmPosition(follower);
