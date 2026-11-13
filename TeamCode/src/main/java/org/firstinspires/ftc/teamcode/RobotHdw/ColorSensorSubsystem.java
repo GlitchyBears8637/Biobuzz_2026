@@ -140,10 +140,18 @@ public class ColorSensorSubsystem {
      * Reads raw RGB from all 4 sensors and converts them to HSV color space.
      */
     public void updateSensorReadings() {
-        Color.RGBToHSV((int) (sensor1.red() * SCALE_FACTOR), (int) (sensor1.green() * SCALE_FACTOR), (int) (sensor1.blue() * SCALE_FACTOR), hsvValues1);
-        Color.RGBToHSV((int) (sensor2.red() * SCALE_FACTOR), (int) (sensor2.green() * SCALE_FACTOR), (int) (sensor2.blue() * SCALE_FACTOR), hsvValues2);
-        Color.RGBToHSV((int) (sensor3.red() * SCALE_FACTOR), (int) (sensor3.green() * SCALE_FACTOR), (int) (sensor3.blue() * SCALE_FACTOR), hsvValues3);
-        Color.RGBToHSV((int) (sensor4.red() * SCALE_FACTOR), (int) (sensor4.green() * SCALE_FACTOR), (int) (sensor4.blue() * SCALE_FACTOR), hsvValues4);
+        if (sensor1 != null) {
+            Color.RGBToHSV((int) (sensor1.red() * SCALE_FACTOR), (int) (sensor1.green() * SCALE_FACTOR), (int) (sensor1.blue() * SCALE_FACTOR), hsvValues1);
+        }
+        if (sensor2 != null) {
+            Color.RGBToHSV((int) (sensor2.red() * SCALE_FACTOR), (int) (sensor2.green() * SCALE_FACTOR), (int) (sensor2.blue() * SCALE_FACTOR), hsvValues2);
+        }
+        if (sensor3 != null) {
+            Color.RGBToHSV((int) (sensor3.red() * SCALE_FACTOR), (int) (sensor3.green() * SCALE_FACTOR), (int) (sensor3.blue() * SCALE_FACTOR), hsvValues3);
+        }
+        if (sensor4 != null) {
+            Color.RGBToHSV((int) (sensor4.red() * SCALE_FACTOR), (int) (sensor4.green() * SCALE_FACTOR), (int) (sensor4.blue() * SCALE_FACTOR), hsvValues4);
+        }
     }
 
     /**

@@ -128,14 +128,13 @@ public class RobotHdw {
         lamp4          = hwMap.get(Servo.class, "lamp4");
 
         // Define and initialize ALL installed sensors.
-        sensorColor1 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense1");
-        sensorColor2 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense2");
-        sensorColor3 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense3");
+        // sensorColor1 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense1");
+        // sensorColor2 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense2");
+        // sensorColor3 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense3");
 
-
-        sensorColor1.setGain(4);
-        sensorColor2.setGain(4);
-        sensorColor3.setGain(4);
+        // if (sensorColor1 != null) sensorColor1.setGain(4);
+        // if (sensorColor2 != null) sensorColor2.setGain(4);
+        // if (sensorColor3 != null) sensorColor3.setGain(4);
 
         // Initialize the IMU
         imu = hwMap.get(IMU.class, "imu");
