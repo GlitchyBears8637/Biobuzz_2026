@@ -47,23 +47,6 @@ public class GoBilda_Drive_Base extends LinearOpMode {
         // Add a delay to allow the Limelight to fully power on and initialize.
         sleep(500);
 
-        // Alliance selection during INIT
-        while (!isStarted() && !isStopRequested()) {
-            if (gamepad1.x) {
-                alliance = LimelightSubsystem.Alliance.RED;
-            } else if (gamepad1.b) {
-                alliance = LimelightSubsystem.Alliance.BLUE;
-            }
-            limelightSubsystem.setAlliance(alliance);
-
-            telemetry.addData("=== ALLIANCE SELECTOR ===", "");
-            telemetry.addData("Press [X] for", "RED ALLIANCE");
-            telemetry.addData("Press [B] for", "BLUE ALLIANCE");
-            telemetry.addData("Selected Alliance", alliance);
-            telemetry.addData("Status", "Initialization Complete. Ready for START.");
-            telemetry.update();
-        }
-
         RobotAimSubsystem robotAimSubsystem = new RobotAimSubsystem(robot, limelightSubsystem);
         LauncherSubsystem launcherSubsystem = new LauncherSubsystem(hardwareMap, limelightSubsystem, robotAimSubsystem, follower);
         launcherSubsystem.setTeleOpMode(true);
@@ -73,6 +56,29 @@ public class GoBilda_Drive_Base extends LinearOpMode {
         IntakeSubsystem intakeSubsystem = new IntakeSubsystem(robot);
         KonamiCodeManager konamiCodeManager = new KonamiCodeManager(hardwareMap, telemetry);
         DriveSubsystems driveSubsystem = new DriveSubsystems(follower);
+
+        tubeOfDespairSubsystem.startHoming();
+
+        // Alliance selection and servo homing during INIT
+        while (!isStarted() && !isStopRequested()) {
+            if (gamepad1.x) {
+                alliance = LimelightSubsystem.Alliance.RED;
+            } else if (gamepad1.b) {
+                alliance = LimelightSubsystem.Alliance.BLUE;
+            }
+            limelightSubsystem.setAlliance(alliance);
+
+            colorSensorSubsystem.updateSensorReadings();
+            tubeOfDespairSubsystem.updateHoming();
+
+            telemetry.addData("=== ALLIANCE SELECTOR ===", "");
+            telemetry.addData("Press [X] for", "RED ALLIANCE");
+            telemetry.addData("Press [B] for", "BLUE ALLIANCE");
+            telemetry.addData("Selected Alliance", alliance);
+            telemetry.addData("Tube Homed", tubeOfDespairSubsystem.isHomed());
+            telemetry.addData("Status", "Initialization Complete. Ready for START.");
+            telemetry.update();
+        }
 
         waitForStart();
 
@@ -97,6 +103,7 @@ public class GoBilda_Drive_Base extends LinearOpMode {
             limelightSubsystem.addTelemetry(telemetry);
             telemetry.addData("Launcher RPM", "%.0f", launcherSubsystem.getRPM());
             telemetry.addData("Launcher Target RPM", "%.0f", launcherSubsystem.getTargetRPM());
+            telemetry.addData("Tube Ball Count", "%d / 4 (Full: %b)", tubeOfDespairSubsystem.getBallCount(), tubeOfDespairSubsystem.isQueueFull());
             telemetry.addData("Tube Wheel Power", robot.servoTubeWheel.getPower());
             colorSensorSubsystem.addTelemetry(telemetry);
             telemetry.addData("Status", "RUN BOB RUN!");
