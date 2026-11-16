@@ -12,38 +12,39 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 
 /**
- * This is NOT an OpMode.
+ * RobotHdw (Robot Hardware Definition Class)
  *
- * This class can be used to define all the specific hardware for a single robot.
- * In this case that robot is the GoBilda Drive Base.
+ * EDUCATIONAL OVERVIEW FOR ROOKIE PROGRAMMERS:
+ * This is NOT an OpMode. Instead, this class acts as a centralized blueprint for all physical
+ * hardware components on the robot (Motors, Servos, Sensors, and the IMU).
+ *
+ * Key concepts:
+ * 1. Hardware Mapping (`hwMap.get`): Connects code variables to the exact device names configured
+ *    in the FTC Driver Station app.
+ * 2. Motor Directions: Setting `FORWARD` or `REVERSE` so positive power moves the robot forward.
+ * 3. Run Modes: `RUN_WITHOUT_ENCODER` for drive motors (since Pedro Pathing handles odometry separately),
+ *    and `RUN_USING_ENCODER` for velocity-regulated mechanisms.
+ * 4. IMU Initialization: Configures the Control Hub's inertial measurement unit to track rotation and heading.
  *
  * This hardware class assumes the following device names have been configured on the robot:
- *
  * Motors:
- *  "motorFrontLeft" ControlHub - 0
- *  "motorBackLeft" ControlHub - 1
- *  "motorFrontRight" ControlHub - 2
- *  "motorBackRight" ControlHub - 3
- *  "motorIntake" ExpansionHub - 0
- *  "motorLauncher" ExpansionHub - 1
+ *  - "motorFrontLeft" (Control Hub Port 0)
+ *  - "motorBackLeft" (Control Hub Port 1)
+ *  - "motorFrontRight" (Control Hub Port 2)
+ *  - "motorBackRight" (Control Hub Port 3)
+ *  - "motorIntake" (Expansion Hub Port 0)
+ *  - "motorLauncher" (Expansion Hub Port 1)
  *
  * Servos:
- *  "servoLift" ExpansionHub - 0
- *  "servoTubeWheel" (CRServo) ExpansionHub - 1
- *  "servoAim" ControlHub - 0
- *  "servoHood" ControlHub - 1
- *  "lamp1" ControlHub - 2
- *  "lamp2" ControlHub - 3
- *  "lamp3" ControlHub - 4
- *  "lamp4" ControlHub -5
+ *  - "servoLift" (Expansion Hub Port 0)
+ *  - "servoTubeWheel" (CRServo, Expansion Hub Port 1)
+ *  - "servoAim" (Control Hub Port 0)
+ *  - "servoHood" (Control Hub Port 1)
+ *  - "lamp1" through "lamp4" (Control Hub Ports 2-5)
  *
  * Sensors:
- * "imu" ControlHub I2C - 0
- *  "sensorColor1" ControlHub I2C - 1
- *  "sensorColor2" ControlHub I2C - 2
- *  "sensorColor3" ControlHub I2C - 3
- *  "otos" ExpansionHu I2C - 0
- *  //"limelight" is initialized in limelight class routine
+ *  - "imu" (Control Hub I2C Port 0)
+ *  - "limelight" (Configured via Limelight3A class)
  */
 public class RobotHdw {
 
@@ -56,7 +57,7 @@ public class RobotHdw {
     public DcMotor   motorIntake      = null;
     public DcMotor   motorLauncher    = null;
 
-    // Servos
+    // Servos and Continuous Rotation Servos (CRServos)
     public CRServo servoTubeWheel   = null;
     public Servo   servoLift        = null;
     public Servo   servoAim         = null;
@@ -81,11 +82,13 @@ public class RobotHdw {
 
     /**
      * Initializes all hardware devices by fetching their names from the Driver Station configuration.
+     *
+     * @param ahwMap The HardwareMap passed from the active OpMode (Autonomous or TeleOp).
      */
     public void init(HardwareMap ahwMap) {
         hwMap = ahwMap;
 
-        // Map drivetrain and mechanism motors
+        // --- Step 1: Map Drivetrain and Mechanism Motors ---
         motorFrontLeft  = hwMap.get(DcMotorEx.class, "motorFrontLeft");
         motorBackLeft   = hwMap.get(DcMotorEx.class, "motorBackLeft");
         motorFrontRight = hwMap.get(DcMotorEx.class, "motorFrontRight");
@@ -93,7 +96,8 @@ public class RobotHdw {
         motorIntake     = hwMap.get(DcMotor.class, "motorIntake");
         motorLauncher   = hwMap.get(DcMotor.class, "motorLauncher");
 
-        // Set motor directions so positive power drives the robot forward
+        // --- Step 2: Set Motor Directions ---
+        // Right side motors are typically reversed so positive power drives the robot forward
         motorFrontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         motorBackLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -101,7 +105,7 @@ public class RobotHdw {
         motorLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
         motorIntake.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        // Stop all motors upon initialization
+        // --- Step 3: Stop All Motors Upon Initialization for Safety ---
         motorFrontLeft.setPower(0);
         motorBackLeft.setPower(0);
         motorFrontRight.setPower(0);
@@ -109,7 +113,8 @@ public class RobotHdw {
         motorIntake.setPower(0);
         motorLauncher.setPower(0);
 
-        // Run drivetrain motors without encoders by default (Pedro Pathing manages its own tracking)
+        // --- Step 4: Configure Motor Run Modes ---
+        // Run drivetrain motors without built-in encoders (Pedro Pathing handles odometry tracking)
         motorFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -117,7 +122,7 @@ public class RobotHdw {
         motorIntake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motorLauncher.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Define and initialize ALL installed servos.
+        // --- Step 5: Map Servos ---
         servoTubeWheel = hwMap.get(CRServo.class, "servoTubeWheel");
         servoAim       = hwMap.get(Servo.class, "servoAim");
         servoHood      = hwMap.get(Servo.class, "servoHood");
@@ -127,16 +132,7 @@ public class RobotHdw {
         lamp3          = hwMap.get(Servo.class, "lamp3");
         lamp4          = hwMap.get(Servo.class, "lamp4");
 
-        // Define and initialize ALL installed sensors.
-        // sensorColor1 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense1");
-        // sensorColor2 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense2");
-        // sensorColor3 = (RevColorSensorV3) hwMap.get(ColorSensor.class, "colorSense3");
-
-        // if (sensorColor1 != null) sensorColor1.setGain(4);
-        // if (sensorColor2 != null) sensorColor2.setGain(4);
-        // if (sensorColor3 != null) sensorColor3.setGain(4);
-
-        // Initialize the IMU
+        // --- Step 6: Initialize the Inertial Measurement Unit (IMU) ---
         imu = hwMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
