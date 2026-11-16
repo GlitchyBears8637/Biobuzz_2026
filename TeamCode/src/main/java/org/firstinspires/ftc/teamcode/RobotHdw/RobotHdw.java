@@ -22,7 +22,7 @@ import com.qualcomm.hardware.rev.RevColorSensorV3;
  * 1. Hardware Mapping (`hwMap.get`): Connects code variables to the exact device names configured
  *    in the FTC Driver Station app.
  * 2. Motor Directions: Setting `FORWARD` or `REVERSE` so positive power moves the robot forward.
- * 3. Run Modes: `RUN_WITHOUT_ENCODER` for drive motors (since Pedro Pathing handles odometry separately),
+ * 3. Run Modes: `RUN_WITHOUT_ENCODER` for drive motors (since Pedro Pathing handles odometry tracking),
  *    and `RUN_USING_ENCODER` for velocity-regulated mechanisms.
  * 4. IMU Initialization: Configures the Control Hub's inertial measurement unit to track rotation and heading.
  *
@@ -36,11 +36,8 @@ import com.qualcomm.hardware.rev.RevColorSensorV3;
  *  - "motorLauncher" (Expansion Hub Port 1)
  *
  * Servos:
- *  - "servoLift" (Expansion Hub Port 0)
- *  - "servoTubeWheel" (CRServo, Expansion Hub Port 1)
- *  - "servoAim" (Control Hub Port 0)
- *  - "servoHood" (Control Hub Port 1)
- *  - "lamp1" through "lamp4" (Control Hub Ports 2-5)
+ *  - "servoTubeWheel" (5-Turn Servo, Expansion Hub Port 1)
+ *  - (Lamps commented out until installed)
  *
  * Sensors:
  *  - "imu" (Control Hub I2C Port 0)
@@ -58,14 +55,11 @@ public class RobotHdw {
     public DcMotor   motorLauncher    = null;
 
     // Servos and Continuous Rotation Servos (CRServos)
-    public CRServo servoTubeWheel   = null;
-    public Servo   servoLift        = null;
-    public Servo   servoAim         = null;
-    public Servo   servoHood        = null;
-    public Servo   lamp1            = null;
-    public Servo   lamp2            = null;
-    public Servo   lamp3            = null;
-    public Servo   lamp4            = null;
+    public Servo   servoTubeWheel   = null;
+    // public Servo   lamp1            = null;
+    // public Servo   lamp2            = null;
+    // public Servo   lamp3            = null;
+    // public Servo   lamp4            = null;
 
     // Sensors
     public RevColorSensorV3 sensorColor1;
@@ -123,14 +117,11 @@ public class RobotHdw {
         motorLauncher.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // --- Step 5: Map Servos ---
-        servoTubeWheel = hwMap.get(CRServo.class, "servoTubeWheel");
-        servoAim       = hwMap.get(Servo.class, "servoAim");
-        servoHood      = hwMap.get(Servo.class, "servoHood");
-        servoLift      = hwMap.get(Servo.class, "servoLift");
-        lamp1          = hwMap.get(Servo.class, "lamp1");
-        lamp2          = hwMap.get(Servo.class, "lamp2");
-        lamp3          = hwMap.get(Servo.class, "lamp3");
-        lamp4          = hwMap.get(Servo.class, "lamp4");
+        servoTubeWheel = hwMap.get(Servo.class, "servoTubeWheel");
+        // lamp1          = hwMap.get(Servo.class, "lamp1");
+        // lamp2          = hwMap.get(Servo.class, "lamp2");
+        // lamp3          = hwMap.get(Servo.class, "lamp3");
+        // lamp4          = hwMap.get(Servo.class, "lamp4");
 
         // --- Step 6: Initialize the Inertial Measurement Unit (IMU) ---
         imu = hwMap.get(IMU.class, "imu");

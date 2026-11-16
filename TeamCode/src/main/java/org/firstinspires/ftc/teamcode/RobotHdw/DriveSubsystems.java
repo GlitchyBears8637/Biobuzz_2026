@@ -37,7 +37,7 @@ public class DriveSubsystems {
         // Feed driver joystick values into Pedro Pathing's manual drive function
         follower.manual(
                 gamepad.left_stick_y,    // Forward / Reverse
-                gamepad.left_stick_x,    // Strafe Left / Right
+                -gamepad.left_stick_x,   // Strafe Left / Right (inverted)
                 gamepad.right_stick_x    // Turn Left / Right
         );
 
