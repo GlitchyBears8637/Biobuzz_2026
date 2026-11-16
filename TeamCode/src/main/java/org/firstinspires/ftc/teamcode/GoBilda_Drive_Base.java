@@ -41,11 +41,20 @@ public class GoBilda_Drive_Base extends LinearOpMode {
         robot.init(hardwareMap);
         follower = Constants.create(hardwareMap);
 
-        LimelightSubsystem limelightSubsystem = new LimelightSubsystem(hardwareMap);
-        limelightSubsystem.start();
+        // Limelight commented out until installed
+        // LimelightSubsystem limelightSubsystem = new LimelightSubsystem(hardwareMap);
+        // limelightSubsystem.start();
+        // sleep(500);
 
-        // Add a delay to allow the Limelight to fully power on and initialize.
-        sleep(500);
+        RobotAimSubsystem robotAimSubsystem = new RobotAimSubsystem(robot, null);
+        LauncherSubsystem launcherSubsystem = new LauncherSubsystem(hardwareMap, null, robotAimSubsystem, follower);
+        launcherSubsystem.setTeleOpMode(true);
+
+        ColorSensorSubsystem colorSensorSubsystem = new ColorSensorSubsystem(robot);
+        TubeOfDespairSubsystem tubeOfDespairSubsystem = new TubeOfDespairSubsystem(robot, launcherSubsystem, colorSensorSubsystem);
+        IntakeSubsystem intakeSubsystem = new IntakeSubsystem(robot);
+        KonamiCodeManager konamiCodeManager = new KonamiCodeManager(hardwareMap, telemetry);
+        DriveSubsystems driveSubsystem = new DriveSubsystems(follower);
 
         // Alliance selection during INIT
         while (!isStarted() && !isStopRequested()) {
@@ -54,7 +63,9 @@ public class GoBilda_Drive_Base extends LinearOpMode {
             } else if (gamepad1.b) {
                 alliance = LimelightSubsystem.Alliance.BLUE;
             }
-            limelightSubsystem.setAlliance(alliance);
+            // limelightSubsystem.setAlliance(alliance);
+
+            colorSensorSubsystem.updateSensorReadings();
 
             telemetry.addData("=== ALLIANCE SELECTOR ===", "");
             telemetry.addData("Press [X] for", "RED ALLIANCE");
@@ -64,16 +75,6 @@ public class GoBilda_Drive_Base extends LinearOpMode {
             telemetry.update();
         }
 
-        RobotAimSubsystem robotAimSubsystem = new RobotAimSubsystem(robot, limelightSubsystem);
-        LauncherSubsystem launcherSubsystem = new LauncherSubsystem(hardwareMap, limelightSubsystem, robotAimSubsystem, follower);
-        launcherSubsystem.setTeleOpMode(true);
-
-        ColorSensorSubsystem colorSensorSubsystem = new ColorSensorSubsystem(robot);
-        TubeOfDespairSubsystem tubeOfDespairSubsystem = new TubeOfDespairSubsystem(robot, launcherSubsystem, colorSensorSubsystem);
-        IntakeSubsystem intakeSubsystem = new IntakeSubsystem(robot);
-        KonamiCodeManager konamiCodeManager = new KonamiCodeManager(hardwareMap, telemetry);
-        DriveSubsystems driveSubsystem = new DriveSubsystems(follower);
-
         waitForStart();
 
         while (opModeIsActive()) {
@@ -81,23 +82,24 @@ public class GoBilda_Drive_Base extends LinearOpMode {
             driveSubsystem.loop(gamepad1);
             konamiCodeManager.update(gamepad1);
 
-            // Update Limelight camera
-            limelightSubsystem.update();
+            // Update Limelight camera (commented out)
+            // limelightSubsystem.update();
 
             // Color sensor & tube feed mechanism
             colorSensorSubsystem.updateSensorReadings();
-            tubeOfDespairSubsystem.update();
+            tubeOfDespairSubsystem.update(gamepad2);
             intakeSubsystem.update(tubeOfDespairSubsystem.isQueueFull(), gamepad2);
 
             // Launcher controls
             launcherSubsystem.update(gamepad2, telemetry);
 
             // Telemetry
-            telemetry.addData("Alliance", alliance);
-            limelightSubsystem.addTelemetry(telemetry);
+            // telemetry.addData("Alliance", alliance);
+            // limelightSubsystem.addTelemetry(telemetry);
             telemetry.addData("Launcher RPM", "%.0f", launcherSubsystem.getRPM());
             telemetry.addData("Launcher Target RPM", "%.0f", launcherSubsystem.getTargetRPM());
-            telemetry.addData("Tube Wheel Power", robot.servoTubeWheel.getPower());
+            telemetry.addData("Tube Ball Count", "%d / 4 (Full: %b)", tubeOfDespairSubsystem.getBallCount(), tubeOfDespairSubsystem.isQueueFull());
+            telemetry.addData("Tube Servo Pos", "%.2f", robot.servoTubeWheel.getPosition());
             colorSensorSubsystem.addTelemetry(telemetry);
             telemetry.addData("Status", "RUN BOB RUN!");
             telemetry.update();

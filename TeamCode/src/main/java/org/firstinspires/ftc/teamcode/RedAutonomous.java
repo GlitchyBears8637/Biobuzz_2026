@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.pedro.Constants;
 /**
  * RedAutonomous (Biobuzz Season Autonomous Program)
  * 
- * EDUCATIONAL TEMPLATE FOR ROOKIE PROGRAMMERS:
+ * EDUCATIONAL OVERVIEW FOR ROOKIE PROGRAMMERS:
  * This file outlines a complete, step-by-step example workflow for an FTC Autonomous period on the Red Alliance.
  * For the Biobuzz game, a typical autonomous routine follows this timeline:
  * 
@@ -48,13 +48,13 @@ public class RedAutonomous extends LinearOpMode {
         robot.init(hardwareMap);
         follower = Constants.create(hardwareMap);
 
-        // Initialize vision, targeting, and scoring subsystems
-        limelightSubsystem = new LimelightSubsystem(hardwareMap);
-        limelightSubsystem.start();
-        limelightSubsystem.setAlliance(LimelightSubsystem.Alliance.RED); // Lock camera to Red Alliance
+        // Initialize vision, targeting, and scoring subsystems (Limelight commented out until installed)
+        // limelightSubsystem = new LimelightSubsystem(hardwareMap);
+        // limelightSubsystem.start();
+        // limelightSubsystem.setAlliance(LimelightSubsystem.Alliance.RED);
 
-        robotAimSubsystem = new RobotAimSubsystem(robot, limelightSubsystem);
-        launcherSubsystem = new LauncherSubsystem(hardwareMap, limelightSubsystem, robotAimSubsystem, follower);
+        robotAimSubsystem = new RobotAimSubsystem(robot, null);
+        launcherSubsystem = new LauncherSubsystem(hardwareMap, null, robotAimSubsystem, follower);
         colorSensorSubsystem = new ColorSensorSubsystem(robot);
         tubeOfDespairSubsystem = new TubeOfDespairSubsystem(robot, launcherSubsystem, colorSensorSubsystem);
         intakeSubsystem = new IntakeSubsystem(robot);
@@ -83,8 +83,8 @@ public class RedAutonomous extends LinearOpMode {
             follower.followPath(scorePath);
             while (opModeIsActive() && follower.isBusy()) {
                 follower.update();
-                limelightSubsystem.update();
-                limelightSubsystem.reaffirmPosition(follower); // Reaffirm position with AprilTags while driving
+                // limelightSubsystem.update();
+                // limelightSubsystem.reaffirmPosition(follower); // Reaffirm position with AprilTags while driving
             }
             */
 
@@ -98,64 +98,10 @@ public class RedAutonomous extends LinearOpMode {
             /*
             launcherSubsystem.setRPM(3200); // Set launcher flywheel speed
             while (opModeIsActive() && !launcherSubsystem.isRpmWithinTolerance()) {
-                // Wait until flywheel reaches target speed
-            }
-            // Run tube wheel to push balls into shooter
-            robot.servoTubeWheel.setPower(1.0);
-            sleep(1500); // 1.5 seconds to launch
-            robot.servoTubeWheel.setPower(0.0);
-            launcherSubsystem.setRPM(0); // Stop launcher
-            */
-
-
-            // --- STEP 3: COLLECTING MORE GAME PIECES (INTAKE CYCLE) ---
-            telemetry.addData("Autonomous", "Intaking Game Pieces...");
-            telemetry.update();
-
-            /*
-            Path intakePath = new Path(new BezierLine(new Point(36.0, 24.0), new Point(60.0, 24.0)));
-            follower.followPath(intakePath);
-            intakeSubsystem.turnOn(); // Turn on intake
-
-            while (opModeIsActive() && follower.isBusy() && !tubeOfDespairSubsystem.isQueueFull()) {
-                follower.update();
-                limelightSubsystem.update();
-                limelightSubsystem.reaffirmPosition(follower);
-                colorSensorSubsystem.updateSensorReadings();
-                tubeOfDespairSubsystem.update();
-                intakeSubsystem.update(tubeOfDespairSubsystem.isQueueFull());
-            }
-            intakeSubsystem.turnOff();
-            */
-
-
-            // --- STEP 4: RETURN AND SCORE SECOND BATCH ---
-            telemetry.addData("Autonomous", "Returning to Score...");
-            telemetry.update();
-
-            /*
-            // Drive back to scoring bucket, re-aim using Limelight, and launch again
-            */
-
-
-            // --- STEP 5: PARK IN OBSERVATION ZONE ---
-            telemetry.addData("Autonomous", "Parking...");
-            telemetry.update();
-
-            /*
-            Path parkPath = new Path(new BezierLine(follower.closestPose().toPoint(), new Point(16.0, 12.0)));
-            follower.followPath(parkPath);
-            while (opModeIsActive() && follower.isBusy()) {
+                launcherSubsystem.update(null, telemetry);
                 follower.update();
             }
             */
-
-            // End of Autonomous loop
-            while (opModeIsActive()) {
-                follower.update();
-                telemetry.addData("Autonomous", "Complete. Pausing.");
-                telemetry.update();
-            }
         }
     }
 }

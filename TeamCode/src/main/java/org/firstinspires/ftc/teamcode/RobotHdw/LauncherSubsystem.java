@@ -67,50 +67,21 @@ public class LauncherSubsystem {
     }
 
     /**
-     * Called every loop cycle to handle auto-aim toggle, trigger controls, and sensor fusion.
+     * Called every loop cycle to handle trigger controls (auto-aim/auto-shoot disabled temporarily).
      */
     public void update(Gamepad gamepad, Telemetry telemetry) {
-        // Toggle auto-shoot and auto-aim mode using Left Bumper (with edge-detection debounce)
-        if (gamepad.left_bumper && !leftBumperWasPressed) {
-            autoshootaim = !autoshootaim;
-        }
-        leftBumperWasPressed = gamepad.left_bumper;
+        // Auto-shoot and auto-aim disabled temporarily to prevent follower/pose null errors
+        autoshootaim = false;
+        
+        telemetry.addData("Auto Aim & Shoot", "Disabled");
 
-        if (autoshootaim) {
-            telemetry.addData("Auto Aim & Shoot", "Enabled");
-
-            // Calculate heading error toward the closest bucket of our alliance color
-            Pose robotPose = follower.closestPose();
-            double headingError = robotAimSubsystem.calculateRobotAimHeadingError(robotPose);
-            RobotAimSubsystem.Bucket closest = robotAimSubsystem.getClosestBucket();
-
-            if (closest != null) {
-                telemetry.addData("Target Bucket", closest.name + " (" + closest.alliance + ")");
-            }
-            telemetry.addData("Heading Error", String.format("%.2f deg", Math.toDegrees(headingError)));
-
-            // Reaffirm robot position using Limelight AprilTags (Sensor Fusion)
-            limelight.reaffirmPosition(follower);
-
-            // If Limelight sees a valid target, scale shooter RPM based on distance (target area)
-            if (limelight.hasValidTarget()) {
-                aimAndPowerForDistance(limelight.getTargetArea());
-            } else {
-                limelight.resetAimPID();
-                setRPM(0); // Stop shooter if target is lost
-            }
+        // Manual trigger control for shooter RPM
+        if (gamepad.right_trigger > 0.1) {
+            double normalizedTrigger = (gamepad.right_trigger - 0.1) / 0.9;
+            double manualRPM = MIN_RPM + normalizedTrigger * (MAX_RPM - MIN_RPM);
+            setRPM(manualRPM);
         } else {
-            limelight.resetAimPID();
-            telemetry.addData("Auto Aim & Shoot", "Disabled");
-
-            // Manual trigger control for shooter RPM
-            if (gamepad.right_trigger > 0.1) {
-                double normalizedTrigger = (gamepad.right_trigger - 0.1) / 0.9;
-                double manualRPM = MIN_RPM + normalizedTrigger * (MAX_RPM - MIN_RPM);
-                setRPM(manualRPM);
-            } else {
-                setRPM(0);
-            }
+            setRPM(0);
         }
     }
 

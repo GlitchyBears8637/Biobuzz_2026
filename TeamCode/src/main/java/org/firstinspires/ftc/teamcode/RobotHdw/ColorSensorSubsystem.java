@@ -86,11 +86,11 @@ public class ColorSensorSubsystem {
         sensor3 = robot.sensorColor3;
         sensor4 = robot.sensorColor4;
 
-        // Initialize lamps from the RobotHdw instance
-        lamp1 = robot.lamp1;
-        lamp2 = robot.lamp2;
-        lamp3 = robot.lamp3;
-        lamp4 = robot.lamp4;
+        // Initialize lamps from the RobotHdw instance (commented out until installed)
+        // lamp1 = robot.lamp1;
+        // lamp2 = robot.lamp2;
+        // lamp3 = robot.lamp3;
+        // lamp4 = robot.lamp4;
 
         // Reset timers on initialization
         flashTimer.reset();
@@ -229,7 +229,9 @@ public class ColorSensorSubsystem {
                 desiredState = LampState.GREEN;
             }
         }
-        lamp.setPosition(desiredState.position);
+        if (lamp != null) {
+            lamp.setPosition(desiredState.position);
+        }
     }
 
     public void addTelemetry(Telemetry telemetry) {

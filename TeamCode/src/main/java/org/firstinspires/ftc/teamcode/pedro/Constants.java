@@ -15,8 +15,21 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+/**
+ * Constants
+ *
+ * EDUCATIONAL OVERVIEW FOR ROOKIE PROGRAMMERS:
+ * This class configures Pedro Pathing, which is the autonomous and movement path-following
+ * engine used by our robot.
+ *
+ * Key configuration sections:
+ * 1. MecanumConfig: Maps the 4 drive motor names and specifies their motor directions.
+ * 2. PinpointConfig: Configures the goBILDA Pinpoint Odometry Computer (tracking pods and IMU).
+ * 3. ForesightConfig: Configures path-following control coefficients and acceleration/deceleration limits.
+ */
 public class Constants {
 
+    // --- Mecanum Drivetrain Configuration ---
     public static MecanumConfig mecanumConfig = new MecanumConfig(c -> {
         c.frontLeftName.set("motorFrontLeft");
         c.frontRightName.set("motorFrontRight");
@@ -30,6 +43,7 @@ public class Constants {
         c.manualBrakeMode.set(true);
     });
 
+    // --- Pinpoint Odometry Localizer Configuration ---
     public static PinpointConfig pinpointConfig = new PinpointConfig(c -> {
         c.name.set("pinpoint");
         c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
@@ -41,6 +55,7 @@ public class Constants {
         c.resetMode.set(PinpointLocalizer.ResetMode.RESET_AND_RECALIBRATE_IMU);
     });
 
+    // --- Foresight Path Following Algorithm Configuration ---
     public static ForesightConfig foresightConfig = new ForesightConfig(c -> {
         Controller forward = Controller.proportional(0.05);
         Controller strafe = Controller.proportional(0.05);
@@ -62,6 +77,9 @@ public class Constants {
         c.naturalStrafeDeceleration.set(50.0);
     });
 
+    /**
+     * Helper factory method that constructs and returns the Pedro Pathing Follower instance.
+     */
     public static Follower create(HardwareMap h) {
         Mecanum drivetrain = new Mecanum(h, mecanumConfig);
         PinpointLocalizer localizer = new PinpointLocalizer(h, pinpointConfig);

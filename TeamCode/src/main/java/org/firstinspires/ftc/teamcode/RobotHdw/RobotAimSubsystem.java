@@ -60,7 +60,7 @@ public class RobotAimSubsystem {
      * @return The heading error in radians (-PI to PI).
      */
     public double calculateRobotAimHeadingError(Pose robotPose) {
-        LimelightSubsystem.Alliance currentAlliance = limelight.getAlliance();
+        LimelightSubsystem.Alliance currentAlliance = (limelight != null) ? limelight.getAlliance() : LimelightSubsystem.Alliance.BLUE;
         if (currentAlliance == null || currentAlliance == LimelightSubsystem.Alliance.DETECT) {
             currentAlliance = LimelightSubsystem.Alliance.BLUE; // Safe default if alliance isn't set
         }
