@@ -46,7 +46,7 @@ public class IntakeSubsystem {
         if (queueFull) {
             motorIntake.setPower(0); // Safety stop when queue is full
         } else {
-            motorIntake.setPower(intakeOn ? 0.8 : 0.0);
+            motorIntake.setPower(intakeOn ? 0.5 : 0.0);
         }
     }
 
