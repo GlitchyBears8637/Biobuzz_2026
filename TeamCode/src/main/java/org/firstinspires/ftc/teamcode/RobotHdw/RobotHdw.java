@@ -97,7 +97,7 @@ public class RobotHdw {
         motorFrontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         motorBackRight.setDirection(DcMotorSimple.Direction.REVERSE);
         motorLauncher.setDirection(DcMotorSimple.Direction.REVERSE);
-        motorIntake.setDirection(DcMotorSimple.Direction.FORWARD);
+        motorIntake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // --- Step 3: Stop All Motors Upon Initialization for Safety ---
         motorFrontLeft.setPower(0);
