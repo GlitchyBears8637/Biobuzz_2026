@@ -29,10 +29,10 @@ public class IntakeSubsystem {
         intakeOn = true;
     }
 
+
     public void turnOff() {
         intakeOn = false;
     }
-
     public boolean isIntakeOn() {
         return intakeOn;
     }
